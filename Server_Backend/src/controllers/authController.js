@@ -1,4 +1,5 @@
 import User from "../models/User.js";
+import jwt from "jsonwebtoken";
 
 export async function signup(req, res) {
   const { email, password, fullName } = req.body;
@@ -26,20 +27,41 @@ export async function signup(req, res) {
       });
     }
 
-    const idx = Math.floot(Math.random() * 100) + 1;
+    const idx = Math.floor(Math.random() * 100) + 1;
     // this will generate a random number between 1 and 100
 
     const randomAvatar = `https://avatar.iran.liara.run/public/${idx}.png`;
 
-    const newUser = new User.create({
+    const newUser = await User.create({
       email,
       fullName,
       password,
       profilePic: randomAvatar,
     });
 
-    
-  } catch (error) {}
+    // TODO: Create the user in STREAM as well
+
+    const token = jwt.sign(
+      { userId: newUser._id },
+      process.env.JWT_SECRET_KEY,
+      {
+        expiresIn: "8d",
+      }
+    );
+
+    res.cookie("jwt", token, {
+      maxAge: 8 * 24 * 60 * 60 * 1000,
+      httpOnly: true, // prevents XSS attacks,
+      sameSite: "strict", // prevents CSRF attacks
+      secure: process.env.NODE_ENV === "production",
+    });
+
+    res.status(201).json({ success: true, user: newUser });
+
+  } catch (error) {
+    console.log("Error in SignUp controller:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
 }
 
 export async function login(req, res) {
