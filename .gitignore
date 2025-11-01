@@ -1,0 +1,31 @@
+# Frontend Ignore Items
+# Logs
+Client_Frontend/logs
+Client_Frontend/*.log
+Client_Frontend/npm-debug.log*
+Client_Frontend/yarn-debug.log*
+Client_Frontend/yarn-error.log*
+Client_Frontend/pnpm-debug.log*
+Client_Frontend/lerna-debug.log*
+
+Client_Frontend/node_modules
+Client_Frontend/dist
+Client_Frontend/dist-ssr
+Client_Frontend/*.local
+
+# Editor directories and files
+Client_Frontend/.vscode/*
+Client_Frontend/!.vscode/extensions.json
+Client_Frontend/.idea
+Client_Frontend/.DS_Store
+Client_Frontend/*.suo
+Client_Frontend/*.ntvs*
+Client_Frontend/*.njsproj
+Client_Frontend/*.sln
+Client_Frontend/*.sw?
+
+
+
+# Backend Ignore Items
+Server_Backend/.env
+Server_Backend/node_modules/
