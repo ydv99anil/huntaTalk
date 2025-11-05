@@ -1,3 +1,4 @@
+import { upsertStreamUser } from "../lib/stream.js";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 
@@ -39,7 +40,16 @@ export async function signup(req, res) {
       profilePic: randomAvatar,
     });
 
-    // TODO: Create the user in STREAM as well
+    try {
+      await upsertStreamUser({
+        id: newUser._id.toString(),
+        name: newUser.fullName,
+        image: newUser.profilePic || "",
+      });
+      console.log(`Stream user created for ${newUser.fullName}`);
+    } catch (error) {
+      console.error("Error creation Stream user", error);
+    }
 
     const token = jwt.sign(
       { userId: newUser._id },
@@ -57,7 +67,6 @@ export async function signup(req, res) {
     });
 
     res.status(201).json({ success: true, user: newUser });
-
   } catch (error) {
     console.log("Error in SignUp controller:", error);
     res.status(500).json({ message: "Internal Server Error" });
@@ -65,9 +74,87 @@ export async function signup(req, res) {
 }
 
 export async function login(req, res) {
-  res.send("Login Route");
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "All fields are resquired" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "Invalid Credentials" });
+
+    const isPasswordCorrect = await user.matchPassword(password);
+    if (!isPasswordCorrect)
+      return res.status(401).json({ message: "Invalid Credentials" });
+
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET_KEY, {
+      expiresIn: "8d",
+    });
+
+    res.cookie("jwt", token, {
+      maxAge: 8 * 24 * 60 * 60 * 1000,
+      httpOnly: true, // prevents XSS attacks,
+      sameSite: "strict", // prevents CSRF attacks
+      secure: process.env.NODE_ENV === "production",
+    });
+
+    res.status(200).json({ success: true, user });
+  } catch (error) {
+    console.log("Error in login controller:", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
 }
 
 export async function logout(req, res) {
-  res.send("Logout Route");
+  res.clearCookie("jwt");
+  res.status(200).json({ success: true, message: "Logged out successfully" });
+}
+
+export async function onboard(req, res) {
+  try {
+    const userId = req.user._id;
+
+    const { fullName, bio, nativeLanguage, learningLanguage, location } =
+      req.body;
+
+    if (
+      !fullName ||
+      !bio ||
+      !nativeLanguage ||
+      !learningLanguage ||
+      !location
+    ) {
+      return res.status(400).json({
+        message: "All fields are required",
+        missingFields: [
+          !fullName && "fullName",
+          !bio && "bio",
+          !nativeLanguage && "nativeLanguage",
+          !learningLanguage && "learningLanguage",
+          !location && "location",
+        ].filter(Boolean),
+      });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        ...req.body,
+        isOnboarded: true,
+      },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // TODO: Update The User in STREAM
+
+    res.status(200).json({ success: true, user: updatedUser });
+  } catch (error) {
+    console.log("Onboarding error:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
 }

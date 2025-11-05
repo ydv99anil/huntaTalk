@@ -4,14 +4,16 @@ import express from "express";
 // dotenv.config();
 // Instead we can write:
 import "dotenv/config";
+import cookieParser from "cookie-parser";
 
 import authRoutes from "./routes/authRoute.js";
 import { connectDB } from "./lib/db.js";
 
 const app = express();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 5001;
 
 app.use(express.json());
+app.use(cookieParser());
 
 // not a good method
 // app.get("/api/auth/signup", (req, res) => {
