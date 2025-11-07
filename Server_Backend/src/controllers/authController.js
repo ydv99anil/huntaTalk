@@ -2,44 +2,48 @@ import { upsertStreamUser } from "../lib/stream.js";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 
+// ✅ SIGNUP
 export async function signup(req, res) {
   const { email, password, fullName } = req.body;
 
   try {
+    // Validate inputs
     if (!email || !password || !fullName) {
       return res.status(400).json({ message: "All fields are required" });
     }
+
     if (password.length < 8) {
       return res
         .status(400)
-        .json({ message: "Password must be at least 8 characters" });
+        .json({ message: "Password must be at least 8 characters long" });
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
     if (!emailRegex.test(email)) {
       return res.status(400).json({ message: "Invalid email format" });
     }
 
+    // Check for existing user
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({
-        message: "Email already existes, please use a diffrent email address",
+        message: "Email already exists, please use a different email address",
       });
     }
 
+    // Random avatar
     const idx = Math.floor(Math.random() * 100) + 1;
-    // this will generate a random number between 1 and 100
-
     const randomAvatar = `https://avatar.iran.liara.run/public/${idx}.png`;
 
+    // Create user
     const newUser = await User.create({
-      email,
       fullName,
+      email,
       password,
       profilePic: randomAvatar,
     });
 
+    // Create user in Stream
     try {
       await upsertStreamUser({
         id: newUser._id.toString(),
@@ -48,9 +52,10 @@ export async function signup(req, res) {
       });
       console.log(`Stream user created for ${newUser.fullName}`);
     } catch (error) {
-      console.error("Error creation Stream user", error);
+      console.error("Stream user creation failed:", error.message);
     }
 
+    // JWT token
     const token = jwt.sign(
       { userId: newUser._id },
       process.env.JWT_SECRET_KEY,
@@ -59,34 +64,36 @@ export async function signup(req, res) {
       }
     );
 
+    // Cookie
     res.cookie("jwt", token, {
       maxAge: 8 * 24 * 60 * 60 * 1000,
-      httpOnly: true, // prevents XSS attacks,
-      sameSite: "strict", // prevents CSRF attacks
+      httpOnly: true,
+      sameSite: "strict",
       secure: process.env.NODE_ENV === "production",
     });
 
     res.status(201).json({ success: true, user: newUser });
   } catch (error) {
-    console.log("Error in SignUp controller:", error);
+    console.error("Error in SignUp controller:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 }
 
+// ✅ LOGIN
 export async function login(req, res) {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ message: "All fields are resquired" });
+      return res.status(400).json({ message: "All fields are required" });
     }
 
     const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: "Invalid Credentials" });
+    if (!user) return res.status(404).json({ message: "Invalid credentials" });
 
     const isPasswordCorrect = await user.matchPassword(password);
     if (!isPasswordCorrect)
-      return res.status(401).json({ message: "Invalid Credentials" });
+      return res.status(401).json({ message: "Invalid credentials" });
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET_KEY, {
       expiresIn: "8d",
@@ -94,27 +101,28 @@ export async function login(req, res) {
 
     res.cookie("jwt", token, {
       maxAge: 8 * 24 * 60 * 60 * 1000,
-      httpOnly: true, // prevents XSS attacks,
-      sameSite: "strict", // prevents CSRF attacks
+      httpOnly: true,
+      sameSite: "strict",
       secure: process.env.NODE_ENV === "production",
     });
 
     res.status(200).json({ success: true, user });
   } catch (error) {
-    console.log("Error in login controller:", error.message);
+    console.error("Error in login controller:", error.message);
     res.status(500).json({ message: "Internal Server Error" });
   }
 }
 
+// ✅ LOGOUT
 export async function logout(req, res) {
   res.clearCookie("jwt");
   res.status(200).json({ success: true, message: "Logged out successfully" });
 }
 
+// ✅ ONBOARDING
 export async function onboard(req, res) {
   try {
     const userId = req.user._id;
-
     const { fullName, bio, nativeLanguage, learningLanguage, location } =
       req.body;
 
@@ -139,22 +147,16 @@ export async function onboard(req, res) {
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      {
-        ...req.body,
-        isOnboarded: true,
-      },
+      { ...req.body, isOnboarded: true },
       { new: true }
     );
 
-    if (!updatedUser) {
+    if (!updatedUser)
       return res.status(404).json({ message: "User not found" });
-    }
-
-    // TODO: Update The User in STREAM
 
     res.status(200).json({ success: true, user: updatedUser });
   } catch (error) {
-    console.log("Onboarding error:", error);
+    console.error("Onboarding error:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 }

@@ -11,7 +11,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
-      lowercase: true, 
+      lowercase: true,
     },
     password: {
       type: String,
@@ -42,7 +42,6 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-
     friends: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -53,26 +52,23 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-
-//pre hook => password parsing:-
+// ✅ Hash password before saving
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
 
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
-
     next();
   } catch (error) {
     next(error);
   }
 });
 
+// ✅ Compare entered password with hashed password
 userSchema.methods.matchPassword = async function (enteredPassword) {
-    const isPasswordCorrect = await bcrypt.compare(enteredPassword, this.password);
-    return isPasswordCorrect;
-}
+  return await bcrypt.compare(enteredPassword, this.password);
+};
 
 const User = mongoose.model("User", userSchema);
-
 export default User;
