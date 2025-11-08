@@ -1,9 +1,13 @@
 import express from "express";
 import "dotenv/config";
 import cookieParser from "cookie-parser";
+
 import mongoose from "mongoose";
 import User from "./models/User.js";
+
 import authRoutes from "./routes/authRoute.js";
+import userRoutes from "./routes/userRoute.js";
+
 import { connectDB } from "./lib/db.js";
 
 const app = express();
@@ -14,6 +18,7 @@ app.use(cookieParser());
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
 
 // Start server and connect DB
 app.listen(PORT, async () => {
