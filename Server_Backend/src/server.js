@@ -7,6 +7,7 @@ import User from "./models/User.js";
 
 import authRoutes from "./routes/authRoute.js";
 import userRoutes from "./routes/userRoute.js";
+import chatRoutes from "./routes/chatRoute.js";
 
 import { connectDB } from "./lib/db.js";
 
@@ -19,6 +20,8 @@ app.use(cookieParser());
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/chat", chatRoutes);
+
 
 // Start server and connect DB
 app.listen(PORT, async () => {

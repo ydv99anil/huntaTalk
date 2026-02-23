@@ -13,4 +13,9 @@ router.post("/logout", logout);
 
 router.post("/onboarding", protectRoute, onboard);
 
+// chech if user is logged in
+// router.get("/me", protectRoute, (res, res) => {
+//     res.status(200).json({success: true, user: requestAnimationFrame.user});
+// });
+
 export default router;
