@@ -1,6 +1,7 @@
 import express from "express";
 import "dotenv/config";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 
 import mongoose from "mongoose";
 import User from "./models/User.js";
@@ -14,6 +15,10 @@ import { connectDB } from "./lib/db.js";
 const app = express();
 const PORT = process.env.PORT || 5001;
 
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true
+})); // It will aloow frontend to send the cookies
 app.use(express.json());
 app.use(cookieParser());
 
