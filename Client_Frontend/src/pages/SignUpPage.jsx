@@ -1,9 +1,10 @@
-import React from "react";
 import { useState } from "react";
 import { ShipWheelIcon } from "lucide-react";
 import { Link } from "react-router";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Transition from "../Ui/Transition.jsx";
-import signUpImage  from "../../public/signup.png"
+import signUpImage from "../../public/signup.png";
+import { signup } from "../lib/api.js";
 
 const SignUpPage = () => {
   const introContent = (triggerExit) => (
@@ -27,18 +28,30 @@ const SignUpPage = () => {
     </div>
   );
 
+  const [transitionEnded, setTransitionEnded] = useState(false);
+
   const [signupData, setSignupData] = useState({
     fullName: "",
     email: "",
     password: "",
   });
 
-  //   const { isPending, error, signupMutation } = useSignUp();
+  const queryClient = useQueryClient();
+
+  const {
+    mutate: signupMutation,
+    isPending,
+    error,
+  } = useMutation({
+    mutationFn: signup,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["authUser"] }),
+  });
 
   const handleSignup = (e) => {
     e.preventDefault();
-    // signupMutation(signupData);
+    signupMutation(signupData);
   };
+
   return (
     <div
       className="h-screen flex items-center justify-center p-4 sm:p-6 md:p-8"
@@ -57,18 +70,19 @@ const SignUpPage = () => {
         <div className="border border-primary/25 flex flex-col lg:flex-row w-full max-w-5xl mx-auto bg-base-100 rounded-xl shadow-lg overflow-hidden">
           {/* SignUp form - left */}
           <div className="w-full lg:w-1/2 p-4 sm:p-8 flex flex-col">
+            {/* Logo */}
             <div className="mb-4 flex items-center justify-start gap-2">
               <ShipWheelIcon className="size-9 text-primary" />
+              <span className="text-3xl font-bold font-mono bg-clip-text text-transparent bg-linear-to-r from-primary to-secondary tracking-wider">
+                huntaTalk
+              </span>
             </div>
-            <span className="text-3xl font-bold font-mono bg-clip-text text-transparent bg-linear-to-r from-primary to-secondary tracking-wider">
-              huntaTalk
-            </span>
 
-            {/* {error && (
-          <div className="alert alert-error mb-4">
-            <span>{error.response.data.message}</span>
-          </div>
-        )} */}
+            {error && (
+              <div className="alert alert-error mb-4">
+                <span>{error.response.data.message}</span>
+              </div>
+            )}
 
             <div className="w-full">
               <form onSubmit={handleSignup}>
@@ -166,15 +180,14 @@ const SignUpPage = () => {
                   </div>
 
                   <button className="btn btn-primary w-full" type="submit">
-                    {/* {isPending ? (
-                  <>
-                    <span className="loading loading-spinner loading-xs"></span>
-                    Loading...
-                  </>
-                ) : (
-                  "Create Account"
-                )} */}
-                    Create Account
+                    {isPending ? (
+                      <>
+                        <span className="loading loading-spinner loading-xs"></span>
+                        Creating....
+                      </>
+                    ) : (
+                      "Create Account"
+                    )}
                   </button>
 
                   <div className="text-center mt-4">
@@ -200,7 +213,8 @@ const SignUpPage = () => {
               {/* Illustraion */}
               <div className="relative aspect-square max-w-sm mx-auto">
                 <img
-                  src={signUpImage}          alt="Language connection illustration"
+                  src={signUpImage}
+                  alt="Language connection illustration"
                   className="w-full h-full"
                 />
               </div>
