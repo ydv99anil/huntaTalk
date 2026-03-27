@@ -48,7 +48,7 @@ const OnboardingPage = () => {
 
   const handleRandomAvatar = () => {
     const idx = Math.floor(Math.random() * 100) + 1;
-    const randomAvatar = `https://api.dicebear.com/9.x/adventurer/svg?seed=Felix`;
+    const randomAvatar = `https://api.dicebear.com/9.x/adventurer/svg?seed=${idx}`;
     setFormState({ ...formState, profilePic: randomAvatar });
     toast.success("Random Profile Pic Generated");
   };
