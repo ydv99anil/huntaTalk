@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Transition from "../Ui/Transition.jsx";
 import signUpImage from "../../public/signup.png";
 import { signup } from "../lib/api.js";
+import useSignUp from "../hooks/useSignUp.js";
 
 const SignUpPage = () => {
   const introContent = (triggerExit) => (
@@ -36,16 +37,7 @@ const SignUpPage = () => {
     password: "",
   });
 
-  const queryClient = useQueryClient();
-
-  const {
-    mutate: signupMutation,
-    isPending,
-    error,
-  } = useMutation({
-    mutationFn: signup,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["authUser"] }),
-  });
+  const { isPending, error, signupMutation } = useSignUp();
 
   const handleSignup = (e) => {
     e.preventDefault();
