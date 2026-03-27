@@ -33,7 +33,11 @@ const OnboardingPage = () => {
     },
 
     onError: (error) => {
-      toast.error(error.response.data.message);
+      console.log(
+        error?.response?.data?.message ||
+          error.message ||
+          "Something went wrong",
+      );
     },
   });
 
@@ -44,8 +48,8 @@ const OnboardingPage = () => {
 
   const handleRandomAvatar = () => {
     const idx = Math.floor(Math.random() * 100) + 1;
-    const randomAvatar = `https://avatar.iran.liara.run/public/${idx}.png`;
-    setFormState({ ...formState, profilePic, randomAvatar });
+    const randomAvatar = `https://api.dicebear.com/9.x/adventurer/svg?seed=Felix`;
+    setFormState({ ...formState, profilePic: randomAvatar });
     toast.success("Random Profile Pic Generated");
   };
 
